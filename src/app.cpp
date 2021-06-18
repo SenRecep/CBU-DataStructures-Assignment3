@@ -1,8 +1,15 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <stack>
+#include <queue>
+#include <cstdio>
+#include <ctime>
+#include <chrono>
 using namespace std;
+using namespace std::chrono;
 
+#pragma region Enums
 enum OrderMode
 {
     PreOrder,
@@ -19,8 +26,8 @@ enum Option
 };
 enum SearchType
 {
-    DFC,
-    BFC
+    DFS,
+    BFS
 };
 enum TreeType
 {
@@ -28,7 +35,9 @@ enum TreeType
     Data2,
     Data3
 };
+#pragma endregion
 
+#pragma region Student
 class Student
 {
 public:
@@ -39,6 +48,10 @@ public:
     bool operator<(const Student &s) const
     {
         return No < s.No;
+    }
+    bool operator==(const Student &s) const
+    {
+        return No == s.No;
     }
     friend ostream &operator<<(ostream &out, Student &s)
     {
@@ -70,23 +83,28 @@ public:
         return student;
     }
 };
+#pragma endregion
+
+#pragma region Nodes
 template <class T>
-class TreeNode
+class Node
 {
 public:
     T Data;
-    TreeNode<T> *Left;
-    TreeNode<T> *Right;
-    TreeNode(T data = T(), TreeNode<T> *left = NULL, TreeNode<T> *right = NULL)
+    Node<T> *Left;
+    Node<T> *Right;
+    Node(T data = T(), Node<T> *left = NULL, Node<T> *right = NULL)
         : Data(data), Left(left), Right(right) {}
 };
+#pragma endregion
 
+#pragma region Data Structures
 template <class T>
 class Tree
 {
 private:
-    TreeNode<T> *root;
-    TreeNode<T> *insert(TreeNode<T> *start, T data)
+    Node<T> *root;
+    Node<T> *insert(Node<T> *start, T data)
     {
         if (start)
         {
@@ -96,10 +114,10 @@ private:
                 start->Right = insert(start->Right, data);
         }
         else
-            return new TreeNode<T>(data);
+            return new Node<T>(data);
         return start;
     }
-    TreeNode<T> *find(TreeNode<T> *start, T data)
+    Node<T> *find(Node<T> *start, T data)
     {
         if (start)
         {
@@ -110,13 +128,13 @@ private:
         }
         return start;
     }
-    TreeNode<T> *getMin(TreeNode<T> *start)
+    Node<T> *getMin(Node<T> *start)
     {
         while (start && start->Left)
             start = start->Left;
         return start;
     }
-    TreeNode<T> *remove(TreeNode<T> *start, TreeNode<T> *deleted)
+    Node<T> *remove(Node<T> *start, Node<T> *deleted)
     {
         if (start)
         {
@@ -126,7 +144,7 @@ private:
                 start->Right = remove(start->Right, deleted);
             else if (start == deleted)
             {
-                TreeNode<T> *temp = NULL;
+                Node<T> *temp = NULL;
                 if (start->Left && start->Right)
                 {
                     temp = getMin(start->Right);
@@ -146,7 +164,7 @@ private:
         }
         return start;
     }
-    void preOrder(TreeNode<T> *start, ostream &out)
+    void preOrder(Node<T> *start, ostream &out)
     {
         if (start)
         {
@@ -155,47 +173,47 @@ private:
             preOrder(start->Right, out);
         }
     }
-    void inOrder(TreeNode<T> *start, ostream &out)
+    void inOrder(Node<T> *start, ostream &out)
     {
         if (start)
         {
-            inOrder(start->Left);
-            out << start->Data << " ";
-            inOrder(start->Right);
+            inOrder(start->Left, out);
+            out << start->Data  << endl;
+            inOrder(start->Right, out);
         }
     }
-    void postOrder(TreeNode<T> *start, ostream &out)
+    void postOrder(Node<T> *start, ostream &out)
     {
         if (start)
         {
-            postOrder(start->Left);
-            postOrder(start->Right);
-            out << start->Data << " ";
+            postOrder(start->Left, out);
+            postOrder(start->Right, out);
+            out << start->Data  << endl;
         }
     }
 
 public:
-    Tree(TreeNode<T> *root = NULL) : root(root) {}
+    Tree(Node<T> *root = NULL) : root(root) {}
     bool IsEmpty() const { return root == NULL; }
-    TreeNode<T> *GetRoot() { return root; }
-    TreeNode<T> *Find(T data, bool last = false)
+    Node<T> *GetRoot() { return root; }
+    Node<T> *Find(T data, bool last = false)
     {
-        TreeNode<T> *before = find(root, data);
-        TreeNode<T> *after = before;
+        Node<T> *before = find(root, data);
+        Node<T> *after = before;
         if (last)
             while (before && (before = find(before->Right, data)))
                 after = before;
         return after;
     }
-    TreeNode<T> *Insert(T data)
+    Node<T> *Insert(T data)
     {
         root = insert(root, data);
     }
-    TreeNode<T> *GetMin()
+    Node<T> *GetMin()
     {
         return getMin(root);
     }
-    void RemoveNode(TreeNode<T> *node)
+    void RemoveNode(Node<T> *node)
     {
         if (node)
         {
@@ -258,8 +276,47 @@ public:
             file.close();
         }
     }
+    T DepthFirstSearch(T data)
+    {
+        Node<T> *temp;
+        stack<Node<T> *> stack;
+        stack.push(root);
+        while (!stack.empty())
+        {
+            temp = stack.top();
+            stack.pop();
+            if (data == temp->Data)
+                return temp->Data;
+            if (temp->Left)
+                stack.push(temp->Left);
+            if (temp->Right)
+                stack.push(temp->Right);
+        }
+        return T();
+    }
+    T BreadthFirstSearch(T data)
+    {
+        Node<T> *temp;
+        queue<Node<T> *> queue;
+        queue.push(root);
+        while (!queue.empty())
+        {
+            temp = queue.front();
+            queue.pop();
+            if (data == temp->Data)
+                return temp->Data;
+            if (temp->Left)
+                queue.push(temp->Left);
+            if (temp->Right)
+                queue.push(temp->Right);
+        }
+        return T();
+    }
 };
 
+#pragma endregion
+
+#pragma region Helpers
 class TreeState
 {
 public:
@@ -321,6 +378,7 @@ public:
     {
         cout << "\n___________________\n\n";
     }
+
     OrderMode OrderSelection()
     {
         if (selection == "1")
@@ -330,7 +388,6 @@ public:
         else
             return PostOrder;
     }
-
     TreeType TreeSelection()
     {
         if (selection == "1")
@@ -343,11 +400,10 @@ public:
     SearchType SearchSelection()
     {
         if (selection == "1")
-            return DFC;
+            return DFS;
         else
-            return BFC;
+            return BFS;
     }
-
     Option MenuSelection()
     {
         if (selection == "A" || selection == "a")
@@ -373,6 +429,7 @@ public:
         tree->Remove(Student(no));
         cout << "Istlem tamamlandi" << endl;
     }
+
     void WriteFileMenu()
     {
         TreeType treeType = TreeMenu();
@@ -385,6 +442,7 @@ public:
         cin >> selection;
         Hr();
         OrderMode orderMode = OrderSelection();
+        tree->Write(orderMode, treeType);
     }
 
     void ListMenu()
@@ -414,6 +472,36 @@ public:
         return TreeSelection();
     }
 
+    void SearchMenu()
+    {
+        int no;
+        cout << "Depth First Search: 1" << endl
+             << "Breath First Search: 2" << endl
+             << "Secim yapiniz: ";
+        cin >> selection;
+        Hr();
+        SearchType searchType = SearchSelection();
+        cout << "Aramak istediginiz ogrencinin numarasini giriniz: ";
+        cin >> no;
+        Hr();
+        TreeType treeType = TreeMenu();
+        Tree<Student> *tree = TreeHelper::GetTree(treeType, state);
+        Student found;
+        switch (searchType)
+        {
+        case DFS:
+            found = tree->DepthFirstSearch(no);
+            break;
+        case BFS:
+            found = tree->BreadthFirstSearch(no);
+            break;
+        }
+        if (found.No != -1)
+            cout << found << endl;
+        else
+            cout << "Ilgili ogrenci bulunamadi" << endl;
+    }
+
     void MainMenu()
     {
         while (true)
@@ -431,12 +519,16 @@ public:
             switch (option)
             {
             case Search:
+                SearchMenu();
                 break;
             case List:
                 ListMenu();
                 break;
             case Delete:
                 DeleteMenu();
+                break;
+            case WriteFile:
+                WriteFileMenu();
                 break;
             default:
                 return;
@@ -445,16 +537,73 @@ public:
         }
     }
 };
+#pragma endregion
+
+class Test
+{
+private:
+    int testNumberCount = 11;
+    int studentNumbers[11] = {1001067,1001072,1001075,1001083,1003002,1003009,1003021,1003028,1003033,1003038,1003041};
+    TreeState *state;
+    double beginDepthFirstSearch(Tree<Student> *tree)
+    {
+        double total = 0;
+        for (int no : studentNumbers)
+        {
+            auto start = high_resolution_clock::now();
+            tree->DepthFirstSearch(no);
+            auto stop = high_resolution_clock::now();
+            microseconds duration = duration_cast<microseconds>(stop - start);
+            total += duration.count();
+        }
+        return total / testNumberCount;
+    }
+    double beginBreadthFirstSearch(Tree<Student> *tree)
+    {
+        double total = 0;
+        for (int no : studentNumbers)
+        {
+            auto start = high_resolution_clock::now();
+            tree->BreadthFirstSearch(no);
+            auto stop = high_resolution_clock::now();
+            microseconds duration = duration_cast<microseconds>(stop - start);
+            total += duration.count();
+        }
+        return total / testNumberCount;
+    }
+
+public:
+    Test(TreeState *state) : state(state) {}
+    void Begin()
+    {
+        Tree<Student> *tree = state->Data1Tree;
+        double d1_avgDFS = beginDepthFirstSearch(tree);
+        double d1_avgBFS = beginBreadthFirstSearch(tree);
+        cout << "data1.txt icin " << testNumberCount << " Ogrencinin ortalama bulunma sureleri:" << endl;
+        cout << "DepthFirstSearch: " << d1_avgDFS << " BreadthFirstSearch: " << d1_avgBFS << endl;
+        tree = state->Data2Tree;
+        double d2_avgDFS = beginDepthFirstSearch(tree);
+        double d2_avgBFS = beginBreadthFirstSearch(tree);
+        cout << "data2.txt icin " << testNumberCount << " Ogrencinin ortalama bulunma sureleri:" << endl;
+        cout << "DepthFirstSearch: " << d2_avgDFS << " BreadthFirstSearch: " << d2_avgBFS << endl;
+        tree = state->Data3Tree;
+        double d3_avgDFS = beginDepthFirstSearch(tree);
+        double d3_avgBFS = beginBreadthFirstSearch(tree);
+        cout << "data3.txt icin " << testNumberCount << " Ogrencinin ortalama bulunma sureleri:" << endl;
+        cout << "DepthFirstSearch: " << d3_avgDFS << " BreadthFirstSearch: " << d3_avgBFS << endl;
+    }
+};
+
 int main()
 {
-
     TreeState *state = new TreeState(
         TreeHelper::Init("../data/data1.txt"),
         TreeHelper::Init("../data/data2.txt"),
         TreeHelper::Init("../data/data3.txt"));
     MenuHelper MenuHelper(state);
     MenuHelper.MainMenu();
-    delete state->Data1Tree, state->Data2Tree, state->Data3Tree;
-    delete state;
+    Test *test = new Test(state);
+    test->Begin();
+    delete state, test;
     return 0;
 }
